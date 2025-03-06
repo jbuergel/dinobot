@@ -21,7 +21,7 @@ CROP_RECTANGLES = [
 ]
 
 # we have canned error messages for if commands are bogus. They are not helpful.
-# they are, however, from the comic. 17? Why not.
+# they are, however, from the comic. 50? Why not.
 ERROR_MESSAGES = [
 	"Sherlock Holmes, who we all already deduced was the world's greatest detective, frowned. He was faced with a new crime! And it was a crime unlike any he'd seen before. This crime......was a COMPUTER CRIME.",
 	"I can't even use a computer anymore, my hands go right through the keys!",
@@ -41,6 +41,38 @@ ERROR_MESSAGES = [
 	"Okay, so we all know computers can turn electricity into bad tweets. But did you know that's not intentional? When they were invented, tweets weren't even a thing yet!!",
 	"That's just a bunch of strange computers that now I'm renting instead of owning!!",
 	"Do you know that millennials use COMPUTERS more often than seniors do, and seniors use computers precisely the correct amount?",
+	"Deduce all you want, SHERLOCK, but it's not gonna help you with figuring out that runtime error!",
+	"And since trillions outweigh the mere BILLIONS alive today, I am, therefore, the most important person on the planet.",
+	"SILENCE! YOU WILL HURT THE FEELINGS OF THE PRECURSOR OF TRILLIONS OF LIVES AND THAT'S THE WORST THING IT'S POSSIBLE TO DO",
+	"BALONEY, I say. Baloney!",
+	"HOLLA",
+	"\"Aw frig,\" Maldives muttered. \"Here we go.\"",
+	"There's lots of nothing, and everything else is a rounding error.",
+	"Failure is just success rounded down, my friend!",
+	"ERROR - DOUBLE SELF DESTRUCT INITIATED",
+	"ERROR 5x290F",
+	"Sorry, babies! YOU HAVE TO GROW UP SOMETIME. It's time to learn some harsh truths!",
+	"...so I keep on making that same error over and over until nobody wants to be my friend because I'm \"the weird one\" who keeps making mistakes, WHICH I NEVER EVEN KNEW I WAS MAKING??",
+	"I didn't know adjectives suffered from overflow errors!!",
+	"Hey Jude! Your make is bad! You should fix that / compiler error!",
+	"In today's society, knowing a little about computers can go a long way! They're not magic boxes. In fact, the more you learn about them the less magical they'll be!",
+	"HAH HAH, JUST KIDDING! EVERYONE SUCKS THE SAME.",
+	"Language is HARD, dudes!",
+	"Paranoia?? Man, I'm proposing a vast worldwide conspiracy where people work to HELP ME OUT ON DEMAND and LET ME LEARN ABOUT BOATS AND POKÉMON.",
+	"Um, I DOUBLE CHECKED THE NUMBER SYSTEM?",
+	"ERROR 5000: NOT ACTUALLY A COMPUTER, UTAHRAPTOR",
+	"I had to pick something!! It's all that came to mind!",
+	"Here Lies T-Rex: Hey I Bet He's Still Wicked Handsome!",
+	"I am Matthew Broderick: computer hacker!",
+	"ERROR 22: IDEA IS TOO AWESOME",
+	"TESTING THE PUNCHING MACHINE",
+	"HTTP error code jokes? Seriously?",
+	"Shakespeare! Are you listening to your MP3s again?!",
+	"Upon closer inspection, forget THAT noise!",
+	"THE·EVALUATION·OF·THAT STATEMENT·RESULTS·IN·A NULL·OUTPUT·SET",
+	"NEW·PROGRAM·ENGAGED: 10 IGNORE WHAT UTAHRAPTOR SAYS 20 UTAHRAPTOR IS LAME 30 GOTO 10",
+	"I have been working on a script: a noir about a computer programmer who gets involved in a snuff film conspiracy. The title? (A)bort, (R)etry, (M)urder!",
+	"STACK OVERFLOW!",
 ]
 
 # fetch_panel will save off panel 2 from a random comic, and return the URL
