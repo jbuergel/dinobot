@@ -79,9 +79,6 @@ ERROR_MESSAGES = [
 # regex to look for "dino[saur][s]" in text, so we can react to it
 DINO_REGEX = re.compile(r'\bdino(saur)?(s)?\b')
 
-# our emoji we use when we're happy
-EMOJI_ID = "<:trex:1346715043210854400>"
-
 # fetch_panel will save off panel 2 from a random comic, and return the URL
 # of the comic
 def fetch_panel(panel_name, panel_number):
@@ -100,7 +97,13 @@ def fetch_panel(panel_name, panel_number):
 def start_bot(bot):
 	f = open('config.yaml')
 	config_map = yaml.safe_load(f)
-	f.close()	
+	f.close()
+	# our emoji we use when we're happy. This will get populated by the YAML
+	# config file, because the ID varies per bot. The format is
+	# <:emojiname:emojiid>
+	# and you can find the ID from the discord application config panel
+	# put the string in as emojiid in the YAML.
+	bot.emojiid = config_map['emojiid']
 	bot.run(config_map['discordtoken'])
 
 def create_bot():
@@ -132,7 +135,7 @@ async def on_message(message):
 		# what the user would send 
 		await qwantz(message.channel, parts[1] if len(parts) > 1 else 2)
 	elif DINO_REGEX.search(message.content):
-		await message.add_reaction(EMOJI_ID)
+		await message.add_reaction(bot.emojiid)
 
 # we're going to default to the second panel, if the user doesn't provide
 # an option, because that's usually the funniest panel
@@ -140,7 +143,7 @@ async def on_message(message):
 # on the other end. I mean, probably.
 async def qwantz(channel, target_panel):
 	# we need to be careful with the panel parameter, because some 
-	# smartass in one of my server is definitely going to try 
+	# smartass in one of my servers is definitely going to try 
 	# "$qwantz -1", "$qwantz 42069", and/or "$qwantz beer"
 	try:
 		panel_number = int(target_panel)
