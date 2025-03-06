@@ -8,6 +8,7 @@ import uuid
 import os
 import yaml
 import random
+import re
 
 # table of crop rectangles for the various panels. These were determined
 # using a paint program on a downloaded comic.
@@ -75,6 +76,12 @@ ERROR_MESSAGES = [
 	"STACK OVERFLOW!",
 ]
 
+# regex to look for "dino[saur][s]" in text, so we can react to it
+DINO_REGEX = re.compile(r'\bdino(saur)?(s)?\b')
+
+# our emoji we use when we're happy
+EMOJI_ID = "<:trex:1346715043210854400>"
+
 # fetch_panel will save off panel 2 from a random comic, and return the URL
 # of the comic
 def fetch_panel(panel_name, panel_number):
@@ -100,20 +107,38 @@ def create_bot():
 	intents = discord.Intents.default()
 	intents.message_content = True
 
-	return commands.Bot(command_prefix='$', intents=intents)
+	# note that we're using the lower level Client instead of Commands, because
+	# we want to listen for certain words in all messages, and the framework
+	# doesn't let us do that as well as use the commands framework
+	return discord.Client(intents=intents)
 
-# create our bot to add our command to it
+
+# create our bot to add our event handler to it
 bot = create_bot()
+
+# main message handler - we're going to look for our commands here,
+# as well as the word "dino[saurs]", which will make us happy.
+@bot.event
+async def on_message(message):
+	if message.author == bot.user:
+		return
+
+	if message.content.startswith('$qwantz'):
+		# split the message, and send the first word after the command
+		# (if any) as the first parameter
+		parts = message.content.split(' ')
+		# default to the second panel, if we don't have a parameter
+		# we send it in as a two, though, because it has to match
+		# what the user would send 
+		await qwantz(message.channel, parts[1] if len(parts) > 1 else 2)
+	elif DINO_REGEX.search(message.content):
+		await message.add_reaction(EMOJI_ID)
 
 # we're going to default to the second panel, if the user doesn't provide
 # an option, because that's usually the funniest panel
 # note that the panel numbers are one-indexed, because it's a human
 # on the other end. I mean, probably.
-# note as well that we define target_panel here as a string, so if someone passes a
-# non-integer string, we don't just error in the framework, but error here.
-# That gives us a chance to send a dumb, useless error message.
-@bot.command(name='qwantz')
-async def qwantz(ctx, target_panel="2"):
+async def qwantz(channel, target_panel):
 	# we need to be careful with the panel parameter, because some 
 	# smartass in one of my server is definitely going to try 
 	# "$qwantz -1", "$qwantz 42069", and/or "$qwantz beer"
@@ -123,17 +148,17 @@ async def qwantz(ctx, target_panel="2"):
 		# be here (see: smartasses), and python will just treat it as an index 
 		# from the end of the list of panels. That is goofy, so we'll just 
 		# return an error in that case. Again, not a helpful one.
-		if panel_number < 0:
+		if panel_number < 1:
 			raise IndexError("Nice try.")
 		file_name = "{0}.gif".format(str(uuid.uuid4()))
 		# make sure to subtract one to make the panel_number zero-indexed
 		url = fetch_panel(file_name, panel_number - 1)
 		with open(file_name, 'rb') as fp:
 			file_to_send = discord.File(fp, filename=file_name)
-			await ctx.send("Today is a good day I think for sending a [panel]({0}).".format(url), file=file_to_send)
+			await channel.send("Today is a good day I think for sending a [panel]({0}).".format(url), file=file_to_send)
 		os.remove(file_name)
 	except (ValueError, IndexError) as e:
-		await ctx.send(random.choice(ERROR_MESSAGES))
+		await channel.send(random.choice(ERROR_MESSAGES))
 
 # start up our bot (using the token from the YAML file)
 start_bot(bot)
