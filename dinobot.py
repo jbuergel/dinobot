@@ -77,7 +77,7 @@ ERROR_MESSAGES = [
 ]
 
 # regex to look for "dino[saur][s]" in text, so we can react to it
-DINO_REGEX = re.compile(r'\bdino(saur)?(s)?\b')
+DINO_REGEX = re.compile(r'\bdino(saur)?(s)?\b', re.IGNORECASE)
 
 # fetch_panel will save off panel 2 from a random comic, and return the URL
 # of the comic
