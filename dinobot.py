@@ -9,16 +9,18 @@ import os
 import yaml
 import random
 import re
+import time
+from asyncio import Lock
 
 # table of crop rectangles for the various panels. These were determined
 # using a paint program on a downloaded comic.
 CROP_RECTANGLES = [
-	(0, 0, 297, 298),
-	(298, 0, 458, 298),
-	(457, 0, 899, 298),
-	(0, 296, 239, 595),
-	(237, 296, 604, 595),
-	(602, 296, 899, 595),
+	(0, 0, 244, 243),
+	(242, 0, 374, 243),
+	(372, 0, 734, 243),
+	(0, 241, 195, 486),
+	(193, 241, 493, 486),
+	(491, 241, 734, 486),
 ]
 
 # we have canned error messages for if commands are bogus. They are not helpful.
@@ -78,17 +80,54 @@ ERROR_MESSAGES = [
 
 # regex to look for "dino[saur][s]" in text, so we can react to it
 DINO_REGEX = re.compile(r'\bdino(saur)?(s)?\b', re.IGNORECASE)
+# regex to parse out the comic number from a qwantz URL
+COMIC_NUMBER_REGEX = re.compile(r'\b.*comic=(\d*)\b', re.IGNORECASE)
+# basic pattern of a comic URL
+COMIC_PAGE_URL = "https://qwantz.com/index.php?comic={0}"
+# base URL to fetch the PNG for the comic
+BASE_COMIC_URL = "https://qwantz.com/{0}"
 
-# fetch_panel will save off panel 2 from a random comic, and return the URL
+# we're going to cache the maximum value we've seen and only fetch it if it's a day stale.
+# yes, theoretically this could mean that we won't roll the most recent available comic immediately
+# after it's available. no, I don't care. I'll also acknowledge that we don't actually need to 
+# refresh on the weekends, but I'll be damned if I'm going to build awareness of the calendar
+# into my stupid discord bot that posts panels from a webcomic. I already did my time at a 
+# calendar company, and I can say with authority that calendars are deeply cursed. bad enough
+# that I'm going to be using time in this code. And honestly, who caches in a stupid discord
+# bot? Me, apparently.
+LAST_MAX_COMIC_FETCH = 0
+LAST_MAX_COMIC = 0
+SECONDS_PER_DAY = 86400
+MAX_COMIC_LOCK = Lock()
+
+# this function creates a random URL to get a comic from
+async def get_comic_url():
+	global LAST_MAX_COMIC
+	global LAST_MAX_COMIC_FETCH
+	# check if our max comic is stale
+	async with MAX_COMIC_LOCK:			
+		now = int(time.time())
+		if ((now - LAST_MAX_COMIC_FETCH) > SECONDS_PER_DAY):
+			INDEX_URL = "https://www.qwantz.com/archive.php"
+			page = requests.get(INDEX_URL)
+			bs = BeautifulSoup(page.content, 'html.parser')
+			# we're going to grab the most recent URL from the archive and then grab the comic number from it.
+			m = COMIC_NUMBER_REGEX.search(bs.find_all('div', class_='container')[0].find_all('a')[1]['href'])
+			LAST_MAX_COMIC = int(m[1])
+			LAST_MAX_COMIC_FETCH = now
+	# now, we can return the URL using the fresh max comic number
+	return COMIC_PAGE_URL.format(random.randint(1, LAST_MAX_COMIC))
+
+# fetch_panel will save off panel a panel from a random comic, and return the URL
 # of the comic
-def fetch_panel(panel_name, panel_number):
-	URL = "https://www.gocomics.com/random/dinosaur-comics"
-	page = requests.get(URL)
-	img_src = BeautifulSoup(page.content, 'html.parser').find_all('picture', class_='item-comic-image')[0].find('img')['src']
+async def fetch_panel(panel_name, panel_number):
+	comic_url = await get_comic_url()
+	page = requests.get(comic_url)
+	img_src = BeautifulSoup(page.content, 'html.parser').find_all('img', class_='comic')[0]['src']
 
 	# fetch the image and chop out panel 2
 	# luckily, these offsets never change
-	png_data = requests.get(img_src)
+	png_data = requests.get(BASE_COMIC_URL.format(img_src))
 	with Image.open(BytesIO(png_data.content)) as img:
 		panel = img.crop(CROP_RECTANGLES[panel_number])
 		panel.save(panel_name)
@@ -114,7 +153,6 @@ def create_bot():
 	# we want to listen for certain words in all messages, and the framework
 	# doesn't let us do that as well as use the commands framework
 	return discord.Client(intents=intents)
-
 
 # create our bot to add our event handler to it
 bot = create_bot()
@@ -153,14 +191,15 @@ async def qwantz(channel, target_panel):
 		# return an error in that case. Again, not a helpful one.
 		if panel_number < 1:
 			raise IndexError("Nice try.")
-		file_name = "{0}.gif".format(str(uuid.uuid4()))
+		file_name = "{0}.png".format(str(uuid.uuid4()))
 		# make sure to subtract one to make the panel_number zero-indexed
-		url = fetch_panel(file_name, panel_number - 1)
+		url = await fetch_panel(file_name, panel_number - 1)
 		with open(file_name, 'rb') as fp:
 			file_to_send = discord.File(fp, filename=file_name)
-			await channel.send("Today is a good day I think for sending a [panel]({0}).".format(url), file=file_to_send)
+			await channel.send("Today is a good day I think for sending a [panel]({0}).".format(url), file=file_to_send, suppress_embeds=True)
 		os.remove(file_name)
-	except (ValueError, IndexError) as e:
+	except (ValueError, IndexError, TypeError, AttributeError, UnboundLocalError) as e:
+		print(e)
 		await channel.send(random.choice(ERROR_MESSAGES))
 
 # start up our bot (using the token from the YAML file)
